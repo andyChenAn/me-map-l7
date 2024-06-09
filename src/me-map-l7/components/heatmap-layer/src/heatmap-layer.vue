@@ -1,15 +1,18 @@
 <template>
   <slot v-if="layer" />
 </template>
-
-<script lang='ts' setup>
-import { ref , inject , provide, onMounted, onBeforeUnmount, watch } from 'vue';
+<script lang="ts" setup>
+import { onBeforeUnmount, onMounted , ref , inject, provide, watch } from 'vue';
+import { LayerOptions } from '../../../types/layer';
 import MeScene from '../../../core/scene';
 import equal from '../../../utils/equal';
-import { BaseLayer, Scene, PolygonLayer, IAnimateOption } from '@antv/l7';
-import { PolygonLayerOptions } from '../../../types/layer';
-const props = withDefaults(defineProps<PolygonLayerOptions>() , {})
-let oldProps: PolygonLayerOptions = {};
+import { BaseLayer , Scene , HeatmapLayer } from '@antv/l7';
+const props = withDefaults(defineProps<LayerOptions>() , {
+  shape : 'heatmap',
+  visible : true,
+  zIndex : 1
+});
+let oldProps: LayerOptions = {};
 const mapScene = ref(inject<MeScene>('mapScene'));
 const layer = ref<BaseLayer>();
 provide('layer' , layer);
@@ -39,7 +42,6 @@ const initLayer = () => {
   if (mapScene.value) {
     const scene = mapScene.value.getScene();
     const layer = scene.getLayerByName(id);
-    console.log(layer)
     if (layer) {
       // 更新图层
       updateLayer(scene , props , oldProps);
@@ -47,12 +49,12 @@ const initLayer = () => {
       // 创建图层
       createLayer(props);
     }
-    oldProps = {...oldProps , ...props};
+    oldProps = JSON.parse(JSON.stringify(props));
   }
 }
-const updateLayer = (scene: Scene , newProps: PolygonLayerOptions , oldProps: PolygonLayerOptions) => {
+const updateLayer = (scene: Scene , newProps: LayerOptions , oldProps: LayerOptions) => {
   if (layer.value) {
-    const { shape , color , size , style , active , autoFit , filter , texture } = newProps;
+    const { shape , style , color , size } = newProps;
     if (!equal(newProps.shape , oldProps.shape)) {
       if (typeof shape === 'string') {
         layer.value.shape(shape);
@@ -72,37 +74,21 @@ const updateLayer = (scene: Scene , newProps: PolygonLayerOptions , oldProps: Po
         layer.value.size(size.type! , size.callback);
       }
     }
+    console.log(newProps.style , oldProps.style)
     if (!equal(newProps.style , oldProps.style)) {
       if (style && typeof style === 'object') {
         layer.value.style(style);
       }
     }
-    // 开启或者关闭 mousehover 元素高亮效果
-    if (!equal(newProps.active , oldProps.active)) {
-      layer.value.active(active!);
-    }
-    if (!equal(newProps.autoFit , oldProps.autoFit)) {
-      layer.value.setAutoFit(autoFit!);
-    }
-    if (!equal(newProps.filter , oldProps.filter)) {
-      if (filter && typeof filter === 'object') {
-        layer.value.filter(filter.type! , filter.callback);
-      }
-    }
-    if (!equal(newProps.texture , oldProps.texture)) {
-      if (texture && typeof texture === 'string') {
-        layer.value.texture(texture);
-      }
-    }
     scene.render();
   }
 }
-const createLayer = (props: PolygonLayerOptions) => {
-  const { id , zIndex , visible , autoFit , pickingBuffer , blend , shape , size , color , style , texture , filter , animate , active } = props;
-  layer.value = new PolygonLayer({
+const createLayer = (props: LayerOptions) => {
+  const { zIndex , visible , id , pickingBuffer , blend , shape , size , style , color } = props;
+  layer.value = new HeatmapLayer({
     name : id,
-    visible : visible === undefined || true,
-    zIndex : zIndex || 1,
+    zIndex : zIndex,
+    visible : visible,
     pickingBuffer,
     blend
   });
@@ -112,7 +98,7 @@ const createLayer = (props: PolygonLayerOptions) => {
       layer.value.shape(shape);
     }
   }
-  // 图层的尺寸
+  // 图层尺寸
   if (size) {
     if (typeof size === 'number' || typeof size === 'string') {
       layer.value.size(size);
@@ -132,22 +118,12 @@ const createLayer = (props: PolygonLayerOptions) => {
   if (style && typeof style === 'object') {
     layer.value.style(style);
   }
-  // 图层纹理贴图
-  if (texture && typeof texture === 'string') {
-    layer.value.texture(texture);
-  }
-  // 图层过滤
-  if (filter && typeof filter === 'object') {
-    layer.value.filter(filter.type! , filter.callback);
-  }
-  // 开启或者关闭 mousehover 元素高亮效果
-  layer.value.active(active! || false);
-  layer.value.setAutoFit(autoFit! || false);
-  // 图层动画
-  layer.value.animate(animate as boolean | IAnimateOption);
   // 绑定事件
   bindEvents();
 }
+watch(props , () => {
+  initLayer();
+})
 const bindEvents = () => {
   for (let eventName in layerEvents) {
     const handlerName = layerEvents[eventName as keyof typeof layerEvents];
@@ -168,16 +144,19 @@ const unbindEvents = () => {
     }
   }
 }
-watch(props , () => {
-  initLayer();
-})
+const removeLayer = () => {
+  if (mapScene.value) {
+    const scene = mapScene.value.getScene();
+    scene.removeLayer(props.id);
+  }
+}
 onMounted(() => {
   initLayer();
 })
 onBeforeUnmount(() => {
   unbindEvents();
+  removeLayer();
 })
-</script>
 
-<style lang='less' scoped>
-</style>
+</script>
+<style lang="less" scoped></style>

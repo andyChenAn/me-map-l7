@@ -2,34 +2,34 @@ import { IParserCfg, IParserData } from "@antv/l7";
 
 // 场景Scene事件
 export type SceneEvent = {
-  'on-loaded'?: (...args: any[])=>void;
-  'on-resize'?: (...args: any[])=>void;
+  'onLoaded'?: (...args: any[])=>void;
+  'onResize'?: (...args: any[])=>void;
 }
 // 地图Map事件 
 export type MapEvent = {
-  'on-map-loaded'?: (...args: any[])=>void;
-  'on-mapmove'?: (...args: any[])=>void;
-  'on-movestart'?: (...args: any[])=>void;
-  'on-moveend'?: (...args: any[])=>void;
-  'on-zoomchange'?: (...args: any[])=>void;
-  'on-zoomstart'?: (...args: any[])=>void;
-  'on-zoomend'?: (...args: any[])=>void;
+  'onMapLoaded'?: (...args: any[])=>void;
+  'onMapmove'?: (...args: any[])=>void;
+  'onMovestart'?: (...args: any[])=>void;
+  'onMoveend'?: (...args: any[])=>void;
+  'onZoomchange'?: (...args: any[])=>void;
+  'onZoomstart'?: (...args: any[])=>void;
+  'onZoomend'?: (...args: any[])=>void;
 }
 // 鼠标事件
 export type MouseEvent = {
-  'on-click'?: (...args: any[])=>void;
-  'on-dblclick'?: (...args: any[])=>void;
-  'on-mousemove'?: (...args: any[])=>void;
-  'on-mousewheel'?: (...args: any[])=>void;
-  'on-mouseover'?: (...args: any[])=>void;
-  'on-mouseout'?: (...args: any[])=>void;
-  'on-mouseup'?: (...args: any[])=>void;
-  'on-mousedown'?: (...args: any[])=>void;
-  'on-contextmenu'?: (...args: any[])=>void;
-  'on-dragstart'?: (...args: any[])=>void;
-  'on-dragging'?: (...args: any[])=>void;
-  'on-dragend'?: (...args: any[])=>void;
-  'on-webglcontextlost'?: (...args: any[])=>void;
+  'onClick'?: (...args: any[])=>void;
+  'onDblclick'?: (...args: any[])=>void;
+  'onMousemove'?: (...args: any[])=>void;
+  'onMousewheel'?: (...args: any[])=>void;
+  'onMouseover'?: (...args: any[])=>void;
+  'onMouseout'?: (...args: any[])=>void;
+  'onMouseup'?: (...args: any[])=>void;
+  'onMousedown'?: (...args: any[])=>void;
+  'onContextmenu'?: (...args: any[])=>void;
+  'onDragstart'?: (...args: any[])=>void;
+  'onDragging'?: (...args: any[])=>void;
+  'onDragend'?: (...args: any[])=>void;
+  'onWebglcontextlost'?: (...args: any[])=>void;
 }
 
 export type SceneProps = {

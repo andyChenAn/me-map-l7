@@ -10,32 +10,32 @@ import { MouseEvent , MapEvent , SceneEvent , SceneProps , LayerImageIcon } from
 type MapClassType = typeof Map;
 type MapOptions = SceneProps;
 const mouseEvents: Record<string , keyof MouseEvent> = {
-  click : 'on-click',
-  dblclick : 'on-dblclick',
-  mousemove : 'on-mousemove',
-  mousewheel : 'on-mousewheel',
-  mouseover : 'on-mouseover',
-  mouseout : 'on-mouseout',
-  mouseup : 'on-mouseup',
-  mousedown : 'on-mousedown',
-  contextmenu : 'on-contextmenu',
-  dragstart : 'on-dragstart',
-  dragging : 'on-dragging',
-  dragend : 'on-dragend',
-  webglcontextlost : 'on-webglcontextlost'
+  click : 'onClick',
+  dblclick : 'onDblclick',
+  mousemove : 'onMousemove',
+  mousewheel : 'onMousewheel',
+  mouseover : 'onMouseover',
+  mouseout : 'onMouseout',
+  mouseup : 'onMouseup',
+  mousedown : 'onMousedown',
+  contextmenu : 'onContextmenu',
+  dragstart : 'onDragstart',
+  dragging : 'onDragging',
+  dragend : 'onDragend',
+  webglcontextlost : 'onWebglcontextlost'
 }
 const mapEvents: Record<string , keyof MapEvent> = {
-  loaded : 'on-map-loaded',
-  mapmove : 'on-mapmove',
-  movestart : 'on-movestart',
-  moveend : 'on-moveend',
-  zoomchange : 'on-zoomchange',
-  zoomstart : 'on-zoomstart',
-  zoomend : 'on-zoomend'
+  loaded : 'onMapLoaded',
+  mapmove : 'onMapmove',
+  movestart : 'onMovestart',
+  moveend : 'onMoveend',
+  zoomchange : 'onZoomchange',
+  zoomstart : 'onZoomstart',
+  zoomend : 'onZoomend'
 }
 const sceneEvents: Record<string , keyof SceneEvent> = {
-  loaded : 'on-loaded',
-  resize : 'on-resize'
+  loaded : 'onLoaded',
+  resize : 'onResize'
 };
 // 保存事件回调函数
 const handlers: Record<string , (...args: any[]) => void> = {}
@@ -93,19 +93,19 @@ export default class MeScene {
     }
   }
   wrapperMouseEvent (evt: any) {
-    const handler = this.options[mouseEvents[evt.type]];
+    const handler = this.options[mouseEvents[evt.type] as keyof typeof this.options];
     if (handler && typeof handler === 'function') {
       handler(evt);
     }
   }
   wrapperMapEvent (eventName: string) {
-    const handler = this.options[mapEvents[eventName]];
+    const handler = this.options[mapEvents[eventName] as keyof typeof this.options];
     if (handler && typeof handler === 'function') {
       handler()
     }
   }
   wrapperSceneEvent (eventName: string) {
-    const handler = this.options[sceneEvents[eventName]];
+    const handler = this.options[sceneEvents[eventName] as keyof typeof this.options];
     if (handler && typeof handler === 'function') {
       handler()
     }

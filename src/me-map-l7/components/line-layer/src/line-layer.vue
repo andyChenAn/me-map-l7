@@ -53,7 +53,6 @@ const updateLayer = (scene: Scene , newProps: LineLayerOptions , oldProps: LineL
   if (layer.value) {
     const { shape , color , size , style , active , autoFit , filter , texture } = newProps;
     if (!equal(newProps.shape , oldProps.shape)) {
-      console.log(2342)
       if (typeof shape === 'string') {
         layer.value.shape(shape);
       }

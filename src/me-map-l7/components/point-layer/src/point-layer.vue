@@ -5,7 +5,7 @@
 import { ref , inject , onMounted , onBeforeUnmount, provide , watch } from 'vue';
 import { LayerIcon } from '../../../types/scene';
 import { PointLayerOptions } from '../../../types/layer';
-import { BaseLayer, Scene , PointLayer } from '@antv/l7';
+import { BaseLayer, Scene , PointLayer, IAnimateOption } from '@antv/l7';
 import MeScene from '../../../core/scene';
 import equal from '../../../utils/equal';
 const props = withDefaults(defineProps<PointLayerOptions>() , {});
@@ -13,6 +13,27 @@ let oldProps: PointLayerOptions = {};
 const mapScene = ref(inject<MeScene>('mapScene'))
 const layer = ref<BaseLayer>();
 provide('layer' , layer);
+const layerEvents = {
+  click : 'onClick',
+  dblclick : 'onDblclick',
+  mousemove : 'onMousemove',
+  mouseout : 'onMouseout',
+  mouseup : 'onMouseup',
+  mousedown : 'onMousedown',
+  contextmenu : 'onContextmenu',
+  unclick : 'onUnclick',
+  unmousemove : 'onUnmousemove',
+  unmouseup : 'onUnmouseup',
+  unmousedown : 'onUnmousedown',
+  uncontextmenu : 'onUncontextmenu',
+  unpick : 'onUnpick',
+  touchstart : 'onTouchstart',
+  touchend : 'onTouchend',
+  inited : 'onInited',
+  add : 'onAdd',
+  remove : 'onRemove',
+  legend : 'onLegend'
+}
 const initLayer = async () => {
   try {
     const { id , icon } = props;
@@ -93,7 +114,7 @@ const updateLayer = (scene: Scene , newProps: PointLayerOptions , oldProps: Poin
  * @param props 属性数据
  */
 const createLayer = (props: PointLayerOptions) => {
-  let { id, visible , zIndex , autoFit , pickingBuffer , blend , shape , size , color , style , active , select , texture , filter } = props;
+  let { id, visible , zIndex , autoFit , pickingBuffer , blend , shape , size , color , style , active , select , texture , filter , animate } = props;
   layer.value = new PointLayer({
     name : id,
     visible : visible === undefined || true,
@@ -129,17 +150,20 @@ const createLayer = (props: PointLayerOptions) => {
   if (style && typeof style === 'object') {
     layer.value.style(style);
   }
-  // 开启或者关闭 mousehover 元素高亮效果
-  layer.value.active(active! || false);
-  // 开启或者关闭 mouseclick 元素选中高亮效果
-  layer.value.select(select! || false);
-  layer.value.setAutoFit(autoFit! || false);
   if (filter && typeof filter === 'object') {
     layer.value.filter(filter.type! , filter.callback);
   }
   if (texture && typeof texture === 'string') {
     layer.value.texture(texture);
   }
+  // 开启或者关闭 mousehover 元素高亮效果
+  layer.value.active(active! || false);
+  // 开启或者关闭 mouseclick 元素选中高亮效果
+  layer.value.select(select! || false);
+  layer.value.setAutoFit(autoFit! || false);
+  // 图层动画
+  layer.value.animate(animate as boolean | IAnimateOption);
+  bindEvents();
 }
 const addIcon = async (mapScene: MeScene , icon: LayerIcon | LayerIcon[]) => {
   if (icon) {
@@ -152,6 +176,26 @@ const addIcon = async (mapScene: MeScene , icon: LayerIcon | LayerIcon[]) => {
     }
   }
 }
+const bindEvents = () => {
+  for (let eventName in layerEvents) {
+    const handlerName = layerEvents[eventName as keyof typeof layerEvents];
+    const handler = props[handlerName as keyof typeof props];
+    if (typeof handler === 'function') {
+      // @ts-ignore
+      layer.value?.on(eventName , handler);
+    }
+  }
+}
+const unbindEvents = () => {
+  for (let eventName in layerEvents) {
+    const handlerName = layerEvents[eventName as keyof typeof layerEvents];
+    const handler = props[handlerName as keyof typeof props];
+    if (typeof handler === 'function') {
+      // @ts-ignore
+      layer.value?.off(eventName , handler);
+    }
+  }
+}
 watch(props , () => {
   initLayer();
 })
@@ -159,7 +203,7 @@ onMounted(() => {
   initLayer();
 })
 onBeforeUnmount(() => {
-
+  unbindEvents();
 })
 defineExpose({
   getLayer () {
