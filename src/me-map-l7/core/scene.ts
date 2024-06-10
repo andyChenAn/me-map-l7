@@ -199,6 +199,6 @@ export default class MeScene {
     return this.map;
   }
   getScene () {
-    return this.scene;
+    return this.scene as Scene;
   }
 }
