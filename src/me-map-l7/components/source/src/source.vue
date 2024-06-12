@@ -1,26 +1,34 @@
 <template>
 </template>
 <script lang="ts" setup>
-import { inject, onMounted, ref, watch } from 'vue';
+import { inject, onMounted, ref, toRaw, watch } from 'vue';
 import MeScene from '../../../core/scene';
 import { BaseLayer } from '@antv/l7';
 type SourceProps = {
-  type?: string;
-  features?: any[];
+  source : {
+    type?: string;
+    features?: any[];
+  }
 }
 const props = withDefaults(defineProps<SourceProps>() , {});
-const layer = ref(inject<BaseLayer>('layer'));
+const layerInstance = inject<Record<string , BaseLayer>>('layerInstance');
 const mapScene = ref(inject<MeScene>('mapScene'));
 watch(props , () => {
-  if (layer.value) {
-    layer.value.setData({...props})
+  const layer = layerInstance?.layer;
+  if (layer) {
+    console.time();
+    layer.setData(toRaw(props.source))
+    console.timeEnd()
   }
+} , {
+  deep : false,
 })
 onMounted(() => {
-  if (layer.value) {
-    layer.value.source({...props});
+  const layer = layerInstance?.layer;
+  if (layer) {
+    layer.source(toRaw(props.source));
     const scene = mapScene.value!.getScene()
-    scene.addLayer(layer.value);
+    scene.addLayer(layer);
   }
 })
 </script>

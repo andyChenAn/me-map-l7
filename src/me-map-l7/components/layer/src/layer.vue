@@ -1,5 +1,5 @@
 <template>
-  <slot v-if="layer" />
+  <slot v-if="isInited" />
 </template>
 <script lang="ts" setup>
 import { ref , inject , onMounted , onBeforeUnmount, provide , watch } from 'vue';
@@ -11,8 +11,12 @@ import equal from '../../../utils/equal';
 const props = withDefaults(defineProps<LayerOptions>() , {});
 let oldProps: LayerOptions = {};
 const mapScene = ref(inject<MeScene>('mapScene'))
-const layer = ref<BaseLayer>();
-provide('layer' , layer);
+const isInited = ref(false); 
+const layerInstance: Record<string , BaseLayer> = {
+  layer : null as any
+};
+let layer: BaseLayer;
+provide('layerInstance' , layerInstance);
 const layerEvents = {
   click : 'onClick',
   dblclick : 'onDblclick',
@@ -43,7 +47,7 @@ const initLayer = async () => {
         // 加载图标
         await addIcon(mapScene.value as MeScene , icon!);
       }
-      const layer = scene.getLayerByName(id);
+      const layer = scene.getLayerByName(id!);
       if (layer) {
         // 更新图层
         updateLayer(scene , props , oldProps)
@@ -58,53 +62,53 @@ const initLayer = async () => {
   }
 }
 const updateLayer = (scene: Scene , newProps: LayerOptions , oldProps: LayerOptions) => {
-  if (layer.value) {
+  if (layer) {
     const { shape , color , size , style , active , select , autoFit , filter , texture  } = newProps;
     if (!equal(newProps.shape , oldProps.shape)) {
       if (typeof shape === 'string') {
-        layer.value.shape(shape);
+        layer.shape(shape);
       } else if (typeof shape === 'object') {
-        layer.value.shape(shape.type! , shape.callback);
+        layer.shape(shape.type! , shape.callback);
       }
     }
     if (!equal(newProps.color , oldProps.color)) {
       if (typeof color === 'string') {
-        layer.value.color(color);
+        layer.color(color);
       } else if (typeof color === 'object') {
-        layer.value.color(color.type! , color.callback);
+        layer.color(color.type! , color.callback);
       }
     }
     if (!equal(newProps.size , oldProps.size)) {
       if (typeof size === 'number' || typeof size === 'string') {
-        layer.value.size(size);
+        layer.size(size);
       } else if (typeof size === 'object') {
-        layer.value.size(size.type! , size.callback);
+        layer.size(size.type! , size.callback);
       }
     }
     if (!equal(newProps.style , oldProps.style)) {
       if (style && typeof style === 'object') {
-        layer.value.style(style);
+        layer.style(style);
       }
     }
     // 开启或者关闭 mousehover 元素高亮效果
     if (!equal(newProps.active , oldProps.active)) {
-      layer.value.active(active!);
+      layer.active(active!);
     }
     // 开启或者关闭 mouseclick 元素选中高亮效果
     if (!equal(newProps.select , oldProps.select)) {
-      layer.value.select(select!);
+      layer.select(select!);
     }
     if (!equal(newProps.autoFit , oldProps.autoFit)) {
-      layer.value.setAutoFit(autoFit!);
+      layer.setAutoFit(autoFit!);
     }
     if (!equal(newProps.filter , oldProps.filter)) {
       if (filter && typeof filter === 'object') {
-        layer.value.filter(filter.type! , filter.callback);
+        layer.filter(filter.type! , filter.callback);
       }
     }
     if (!equal(newProps.texture , oldProps.texture)) {
       if (texture && typeof texture === 'string') {
-        layer.value.texture(texture);
+        layer.texture(texture);
       }
     }
     scene.render();
@@ -122,55 +126,59 @@ const createLayer = (props: LayerOptions) => {
     point : PointLayer,
     polygon : PolygonLayer
   }
-  layer.value = new layerMap[type as keyof typeof layerMap]({
+  layer = new layerMap[type as keyof typeof layerMap]({
     name : id,
     visible : visible === undefined || true,
     zIndex : zIndex || 1,
     pickingBuffer : pickingBuffer,
     blend : blend
   });
-  if (layer.value) {
+  // 将layer图层对象保存到layerInstance中，保存在这里的目的是为了使用inject能获取到
+  layerInstance.layer = layer;
+  // 已经创建成功
+  isInited.value = true;
+  if (layer) {
     // 图层形状
     if (shape) {
       if (typeof shape === 'string') {
-        layer.value.shape(shape);
+        layer.shape(shape);
       } else if (typeof shape === 'object') {
-        layer.value.shape(shape.type! , shape.callback);
+        layer.shape(shape.type! , shape.callback);
       }
     }
     // 图层大小
     if (size) {
       if (typeof size === 'number' || typeof size === 'string') {
-        layer.value.size(size);
+        layer.size(size);
       } else if (typeof size === 'object') {
-        layer.value.size(size.type! , size.callback);
+        layer.size(size.type! , size.callback);
       }
     }
     // 图层颜色
     if (color) {
       if (typeof color === 'string') {
-        layer.value.color(color);
+        layer.color(color);
       } else if (typeof color === 'object') {
-        layer.value.color(color.type! , color.callback);
+        layer.color(color.type! , color.callback);
       }
     }
     // 图层样式
     if (style && typeof style === 'object') {
-      layer.value.style(style);
+      layer.style(style);
     }
     if (filter && typeof filter === 'object') {
-      layer.value.filter(filter.type! , filter.callback);
+      layer.filter(filter.type! , filter.callback);
     }
     if (texture && typeof texture === 'string') {
-      layer.value.texture(texture);
+      layer.texture(texture);
     }
     // 开启或者关闭 mousehover 元素高亮效果
-    layer.value.active(active! || false);
+    layer.active(active! || false);
     // 开启或者关闭 mouseclick 元素选中高亮效果
-    layer.value.select(select! || false);
-    layer.value.setAutoFit(autoFit! || false);
+    layer.select(select! || false);
+    layer.setAutoFit(autoFit! || false);
     // 图层动画
-    layer.value.animate(animate as boolean | IAnimateOption);
+    layer.animate(animate as boolean | IAnimateOption);
     bindEvents();
   }
 }
@@ -216,7 +224,7 @@ onBeforeUnmount(() => {
 })
 defineExpose({
   getLayer () {
-    return layer.value;
+    return layer;
   }
 })
 </script>
