@@ -1,17 +1,23 @@
 import { Component } from "vue";
-import MePointLayer from "./components/point-layer";
+import MeScene from "./components/scene";
+import MeHeatmapLayer from "./components/heatmap-layer";
 import MeLayer from "./components/layer";
-import MeLineLayer from "./components/line-layer";
-import MePolygonLayer from "./components/polygon-layer";
-import MeScene from "./core/scene";
 import MeSource from "./components/source";
+import MeClusterlayer , { ClusterLayerProps } from "./components/cluster-layer";
+import MeMarker from "./components/marker";
+import MePopup from "./components/popup";
+export type * from './types/layer';
+export type * from './types/marker';
+export type * from './types/popup';
+export type * from './types/scene';
 const components: Record<string , Component> = {
-  MePointLayer,
-  MeLayer,
-  MeLineLayer,
-  MePolygonLayer,
   MeScene,
-  MeSource
+  MeSource,
+  MeLayer,
+  MeHeatmapLayer,
+  MeClusterlayer,
+  MeMarker,
+  MePopup
 };
 const install = function (app: any) {
   Object.keys(components).forEach((key) => {
@@ -26,6 +32,9 @@ if (typeof window !== 'undefined' && window.Vue) {
   // @ts-ignore
   install(window.Vue)
 };
+export type {
+  ClusterLayerProps,
+}
 export default {
   install,
   ...components

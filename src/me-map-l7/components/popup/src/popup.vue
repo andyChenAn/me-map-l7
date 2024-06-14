@@ -3,7 +3,7 @@
 </template>
 <script lang="ts" setup>
 import { PopupOptions } from '../../../types/popup';
-import { getCurrentInstance, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { getCurrentInstance, inject, onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue';
 import MeScene from '../../../core/scene';
 import { Popup } from '@antv/l7';
 import equal from '../../../utils/equal';
@@ -26,7 +26,7 @@ const props = withDefaults(defineProps<PopupOptions>() , {
 const instance = getCurrentInstance();
 const mapScene = ref(inject<MeScene>('mapScene'));
 let oldProps: PopupOptions = {};
-const popup = ref<Popup>();
+let popup: Popup;
 const popupEvents = {
   open : 'onOpen',
   close : 'onClose',
@@ -34,20 +34,20 @@ const popupEvents = {
   hide : 'onHide'
 }
 const createPopup = () => {
-  const { longitude , latitude } = props;
+  const { longitude , latitude } = toRaw(props);
   const scene = mapScene.value?.getScene();
-  popup.value = new Popup({
+  popup = new Popup({
     lngLat : {
       lng : longitude!,
       lat : latitude!
     },
-    ...omit(props , ['longitude' , 'latitude' , 'onClose' , 'onOpen' , 'onShow' , 'onHide'])
+    ...omit(toRaw(props) , ['longitude' , 'latitude' , 'onClose' , 'onOpen' , 'onShow' , 'onHide'])
   });
   const el = instance?.vnode.el!.nextElementSibling;
   if (el) {
-    popup.value.setHTML(el);
+    popup.setHTML(el);
   }
-  scene?.addPopup(popup.value);
+  scene?.addPopup(popup);
   oldProps = JSON.parse(JSON.stringify(props));
   bindEvents();
 }
@@ -55,7 +55,7 @@ const bindEvents = () => {
   for (let eventName in popupEvents) {
     const handler = props[popupEvents[eventName as keyof typeof popupEvents] as keyof typeof props] as () => void;
     if (handler) {
-      popup.value?.on(eventName , handler);
+      popup.on(eventName , handler);
     }
   }
 }
@@ -63,36 +63,35 @@ const unbindEvents = () => {
   for (let eventName in popupEvents) {
     const handler = props[popupEvents[eventName as keyof typeof popupEvents] as keyof typeof props] as () => void;
     if (handler) {
-      popup.value?.off(eventName , handler);
+      popup.off(eventName , handler);
     }
   }
 }
 const updatePopup = (newProps: PopupOptions , oldProps: PopupOptions) => {
-  if (popup.value) {
+  if (popup) {
     const { text , title , html , longitude , latitude } = newProps;
     if (!equal(text , oldProps.text)) {
-      popup.value.setText(text!);
+      popup.setText(text!);
     }
     if (!equal(title , oldProps.title)) {
-      popup.value.setTitle(title);
+      popup.setTitle(title);
     }
     if (!equal(html , oldProps.html)) {
-      popup.value.setHTML(html!);
+      popup.setHTML(html!);
     }
     if (!equal(longitude , oldProps.longitude) || !equal(latitude , oldProps.latitude)) {
-      popup.value.setLngLat({lng : longitude! , lat : latitude!});
+      popup.setLngLat({lng : longitude! , lat : latitude!});
     }
   }
 }
 const removePopup = () => {
-  if (mapScene.value && popup.value) {
+  if (mapScene.value && popup) {
     const scene = mapScene.value.getScene();
-    scene.removePopup(popup.value)
+    scene.removePopup(popup)
   }
 }
 watch(props , () => {
-  console.log(23423)
-  updatePopup(props , oldProps);
+  updatePopup(toRaw(props) , toRaw(oldProps));
 })
 onMounted(() => {
   createPopup();

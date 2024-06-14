@@ -18,7 +18,6 @@ const containerRef = ref();
 
 // 地图场景
 const mapScene = ref<MeScene>();
-
 provide("mapScene" , mapScene);
 
 onMounted(() => {
@@ -27,7 +26,7 @@ onMounted(() => {
   } else {
     if (canuse.value) {
       // 如果地图已经加载完了，并且scene组件设置了canuse为true，那么表示我可以直接使用scene组件，不需要再重新去加载地图了
-      mapScene.value = MeScene._sceneCache.pop();
+      mapScene.value = MeScene._sceneCache.pop() || MeScene._currentScene;
       return;
     }
     // 复用
@@ -65,6 +64,9 @@ defineExpose({
   },
   getMap () {
     return mapScene.value?.getMap();
+  },
+  getDraw () {
+    return mapScene.value?.getDraw();
   }
 });
 </script>

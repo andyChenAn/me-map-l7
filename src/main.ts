@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
-
-createApp(App).mount('#app')
+import meMapL7 from './me-map-l7';
+createApp(App).use(meMapL7).mount('#app')

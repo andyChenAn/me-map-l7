@@ -1,22 +1,21 @@
-<template>
-  <slot v-if="isInited" />
+<!-- 
+  @author : andy
+  @descirption : 图层组件
+ -->
+ <template>
 </template>
 <script lang="ts" setup>
-import { ref , inject , onMounted , onBeforeUnmount, provide , watch } from 'vue';
+import { ref , inject , onMounted , onBeforeUnmount , watch } from 'vue';
 import { LayerIcon } from '../../../types/scene';
 import { LayerOptions, LayerType } from '../../../types/layer';
-import { BaseLayer, Scene , PointLayer, IAnimateOption, LineLayer, PolygonLayer } from '@antv/l7';
+import { BaseLayer, Scene , PointLayer, IAnimateOption, LineLayer, PolygonLayer, HeatmapLayer, Source, ImageLayer, RasterLayer } from '@antv/l7';
 import MeScene from '../../../core/scene';
 import equal from '../../../utils/equal';
 const props = withDefaults(defineProps<LayerOptions>() , {});
 let oldProps: LayerOptions = {};
 const mapScene = ref(inject<MeScene>('mapScene'))
-const isInited = ref(false); 
-const layerInstance: Record<string , BaseLayer> = {
-  layer : null as any
-};
 let layer: BaseLayer;
-provide('layerInstance' , layerInstance);
+const sourceInstance = inject<Record<string , Source>>('sourceInstance');
 const layerEvents = {
   click : 'onClick',
   dblclick : 'onDblclick',
@@ -63,7 +62,7 @@ const initLayer = async () => {
 }
 const updateLayer = (scene: Scene , newProps: LayerOptions , oldProps: LayerOptions) => {
   if (layer) {
-    const { shape , color , size , style , active , select , autoFit , filter , texture  } = newProps;
+    const { shape , color , size , style , active , select , autoFit , filter , texture , scale } = newProps;
     if (!equal(newProps.shape , oldProps.shape)) {
       if (typeof shape === 'string') {
         layer.shape(shape);
@@ -89,6 +88,10 @@ const updateLayer = (scene: Scene , newProps: LayerOptions , oldProps: LayerOpti
       if (style && typeof style === 'object') {
         layer.style(style);
       }
+    }
+    // scale
+    if (!equal(newProps.scale , oldProps.scale)) {
+      layer.scale(scale.type , scale.callback);
     }
     // 开启或者关闭 mousehover 元素高亮效果
     if (!equal(newProps.active , oldProps.active)) {
@@ -120,11 +123,15 @@ const updateLayer = (scene: Scene , newProps: LayerOptions , oldProps: LayerOpti
  * @param props 属性数据
  */
 const createLayer = (props: LayerOptions) => {
-  let { type , id, visible , zIndex , autoFit , pickingBuffer , blend , shape , size , color , style , active , select , texture , filter , animate } = props;
+  let { type , id, visible , zIndex , autoFit , pickingBuffer , blend , shape , size , color , style , active , select , texture , filter , animate , scale } = props;
+  const scene = mapScene.value?.getScene();
   const layerMap: Record<LayerType , any> = {
     line : LineLayer,
     point : PointLayer,
-    polygon : PolygonLayer
+    polygon : PolygonLayer,
+    heatmap : HeatmapLayer,
+    image : ImageLayer,
+    raster : RasterLayer
   }
   layer = new layerMap[type as keyof typeof layerMap]({
     name : id,
@@ -133,11 +140,11 @@ const createLayer = (props: LayerOptions) => {
     pickingBuffer : pickingBuffer,
     blend : blend
   });
-  // 将layer图层对象保存到layerInstance中，保存在这里的目的是为了使用inject能获取到
-  layerInstance.layer = layer;
-  // 已经创建成功
-  isInited.value = true;
   if (layer) {
+    // 数据源
+    if (sourceInstance?.source) {
+      layer.source(sourceInstance.source);
+    }
     // 图层形状
     if (shape) {
       if (typeof shape === 'string') {
@@ -166,6 +173,10 @@ const createLayer = (props: LayerOptions) => {
     if (style && typeof style === 'object') {
       layer.style(style);
     }
+    // scale
+    if (scale && typeof scale === 'object') {
+      layer.scale(scale.type , scale.callback);
+    }
     if (filter && typeof filter === 'object') {
       layer.filter(filter.type! , filter.callback);
     }
@@ -180,6 +191,7 @@ const createLayer = (props: LayerOptions) => {
     // 图层动画
     layer.animate(animate as boolean | IAnimateOption);
     bindEvents();
+    scene?.addLayer(layer);
   }
 }
 const addIcon = async (mapScene: MeScene , icon: LayerIcon | LayerIcon[]) => {
@@ -198,8 +210,7 @@ const bindEvents = () => {
     const handlerName = layerEvents[eventName as keyof typeof layerEvents];
     const handler = props[handlerName as keyof typeof props];
     if (typeof handler === 'function') {
-      // @ts-ignore
-      layer.value?.on(eventName , handler);
+      layer.on(eventName , handler);
     }
   }
 }
@@ -208,9 +219,15 @@ const unbindEvents = () => {
     const handlerName = layerEvents[eventName as keyof typeof layerEvents];
     const handler = props[handlerName as keyof typeof props];
     if (typeof handler === 'function') {
-      // @ts-ignore
-      layer.value?.off(eventName , handler);
+      layer.off(eventName , handler);
     }
+  }
+}
+const removeLayer = () => {
+  if (mapScene.value) {
+    const scene = mapScene.value.getScene();
+    const layer = scene.getLayerByName(props.id!);
+    scene.removeLayer(layer!);
   }
 }
 watch(props , () => {
@@ -221,6 +238,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   unbindEvents();
+  removeLayer();
 })
 defineExpose({
   getLayer () {

@@ -1,4 +1,4 @@
-import { IParserCfg, IParserData } from "@antv/l7";
+import { IParserCfg, IParserData, ISourceCFG } from "@antv/l7";
 
 // 场景Scene事件
 export type SceneEvent = {
@@ -326,28 +326,12 @@ export type LayerIcon = {name: string , url: LayerImageIcon};
 // 数据源类型
 export type SourceType = | 'csv' | 'json' | 'geojson' | 'image' | 'raster' | 'rasterTile' | 'mvt' | 'geojsonvt';
 // 数据源的option选项
-export type SourceOption = {
-  cluster?: boolean;
-  clusterOptions?: {
-    radius?: number;
-    minZoom?: number;
-    maxZoom?: number;
-  };
-  parser: SourceParser;
-  transforms: SourceTransform;
+export type SourceOptions = {
+  data?: any;
+  options?: ISourceCFG;
 }
-export type SourceParser = {
-  type: IParserType;
-  x?: string;
-  y?: string;
-  x1?: string;
-  y1?: string;
-  coordinates?: string;
-  geometry?: string;
-  [key: string]: any;
-}
-export type SourceTransform = {
-  type: string;
-  [key: string]: any;
-  callback?: CallBack;
+export type ClusterOption = {
+  radius?: number;
+  minZoom?: number;
+  maxZoom?: number;
 }

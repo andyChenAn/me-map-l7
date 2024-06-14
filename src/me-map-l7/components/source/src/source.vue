@@ -1,35 +1,53 @@
 <template>
+  <slot v-if="loaded" />
 </template>
-<script lang="ts" setup>
-import { inject, onMounted, ref, toRaw, watch } from 'vue';
+
+<script lang='ts' setup>
+import { provide , ref, onMounted, toRaw, watch, inject } from 'vue';
+import { Source } from '@antv/l7';
+import { SourceOptions } from '../../../types/scene';
 import MeScene from '../../../core/scene';
-import { BaseLayer } from '@antv/l7';
-type SourceProps = {
-  source : {
-    type?: string;
-    features?: any[];
+const props = withDefaults(defineProps<SourceOptions>() , {
+  data () {
+    return {
+      type : 'FeatureCollection',
+      features : []
+    }
+  }
+});
+const loaded = ref(false);
+const sourceInstance: Record<string , Source> = {
+  source : null as any
+};
+provide('sourceInstance' , sourceInstance);
+const mapScene = ref(inject<MeScene>('mapScene'))
+const createSource = () => {
+  if (mapScene.value) {
+    const { data , options } = props;
+    if (options) {
+      sourceInstance.source = new Source(toRaw(data) , options);
+    } else {
+      sourceInstance.source = new Source(toRaw(data));
+    }
+    loaded.value = true;
   }
 }
-const props = withDefaults(defineProps<SourceProps>() , {});
-const layerInstance = inject<Record<string , BaseLayer>>('layerInstance');
-const mapScene = ref(inject<MeScene>('mapScene'));
 watch(props , () => {
-  const layer = layerInstance?.layer;
-  if (layer) {
+  if (sourceInstance.source) {
+    const { data } = props;
     console.time();
-    layer.setData(toRaw(props.source))
-    console.timeEnd()
+    sourceInstance.source.setData(toRaw(data));
+    console.timeEnd();
   }
 } , {
-  deep : false,
-})
+  deep : false
+});
 onMounted(() => {
-  const layer = layerInstance?.layer;
-  if (layer) {
-    layer.source(toRaw(props.source));
-    const scene = mapScene.value!.getScene()
-    scene.addLayer(layer);
-  }
+  setTimeout(() => {
+    createSource();
+  })
 })
 </script>
-<style lang="less" scoped></style>
+
+<style lang='less' scoped>
+</style>

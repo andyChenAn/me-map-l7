@@ -4,7 +4,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref , inject , onMounted , onBeforeUnmount, nextTick, watch } from 'vue';
+import { ref , inject , onMounted , onBeforeUnmount, nextTick, watch, toRaw } from 'vue';
 import { MarkerOptions } from '../../../types/marker';
 import { anchorType , Marker } from '@antv/l7';
 import MeScene from '../../../core/scene';
@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<MarkerOptions>() , {
   anchor : 'center'
 });
 const markerRef = ref();
-const marker = ref<Marker>();
+let marker: Marker;
 const mapScene = ref(inject<MeScene>('mapScene'));
 let oldProps: MarkerOptions = {};
 const markerEvents = {
@@ -35,31 +35,31 @@ const markerEvents = {
 }
 const createMarker = () => {
   nextTick(() => {
-    const { longitude , latitude , offsets , anchor , draggable ,extData } = props;
+    const { longitude , latitude , offsets , anchor , draggable ,extData } = toRaw(props);
     const el = markerRef.value.children[0];
     if (el) {
       const scene = mapScene.value?.getScene();
-      marker.value = new Marker({
+      marker = new Marker({
         offsets,
         anchor : anchor as anchorType,
         draggable,
         extData,
         element: el
       });
-      marker.value.setLnglat({lng : longitude! , lat : latitude!});
-      scene?.addMarker(marker.value);
+      marker.setLnglat({lng : longitude! , lat : latitude!});
+      scene?.addMarker(marker);
       bindEvents();
     }
-    oldProps = JSON.parse(JSON.stringify(props));
+    oldProps = JSON.parse(JSON.stringify(toRaw(props)));
   })
 }
 const updateMarker = () => {
-  const { longitude , latitude , draggable } = props;
+  const { longitude , latitude , draggable } = toRaw(props);
   if (!equal(longitude , oldProps.longitude) || !equal(latitude , oldProps.latitude)) {
-    marker.value?.setLnglat({lng : longitude! , lat : latitude!});
+    marker.setLnglat({lng : longitude! , lat : latitude!});
   };
   if (!equal(draggable , oldProps.draggable)) {
-    marker.value?.setDraggable(draggable!);
+    marker.setDraggable(draggable!);
   }
   oldProps = JSON.parse(JSON.stringify(props));
 }
@@ -67,7 +67,7 @@ const bindEvents = () => {
   for (let eventName in markerEvents) {
     const handler = props[markerEvents[eventName as keyof typeof markerEvents] as keyof typeof props] as () => void;
     if (handler) {
-      marker.value?.on(eventName , handler);
+      marker.on(eventName , handler);
     }
   }
 }
@@ -75,13 +75,13 @@ const unbindEvents = () => {
   for (let eventName in markerEvents) {
     const handler = props[markerEvents[eventName as keyof typeof markerEvents] as keyof typeof props] as () => void;
     if (handler) {
-      marker.value?.off(eventName , handler);
+      marker.off(eventName , handler);
     }
   }
 }
 const removeMarker = () => {
-  if (marker.value) {
-    marker.value.remove();
+  if (marker) {
+    marker.remove();
   }
 }
 watch(props , () => {

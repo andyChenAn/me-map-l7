@@ -1,6 +1,6 @@
-import Scene from './src/scene.vue';
-Scene.name = 'me-map';
-Scene.install = (app: any) => {
-  app.component(Scene.name , Scene);
+import MeScene from './src/scene.vue';
+MeScene.name = 'me-scene';
+MeScene.install = (app: any) => {
+  app.component(MeScene.name , MeScene);
 }
-export default Scene;
+export default MeScene;
