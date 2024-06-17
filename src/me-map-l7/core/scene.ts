@@ -8,6 +8,7 @@ import { Mapbox } from '@antv/l7-maps';
 import equal from '../utils/equal'
 import { MouseEvent , MapEvent , SceneEvent , SceneProps , LayerImageIcon } from '../types/scene';
 import Draw from "../draw";
+import L7Draw from "../L7Draw";
 type MapClassType = typeof Map;
 type MapOptions = SceneProps;
 const mouseEvents: Record<string , keyof MouseEvent> = {
@@ -55,6 +56,8 @@ export default class MeScene {
   static _currentScene: MeScene | undefined = undefined;
   // 标绘实例
   draw: Draw | undefined = undefined;
+  // L7标绘实例
+  l7Draw: L7Draw | undefined = undefined;
   constructor (MapClass: MapClassType , container: HTMLElement , options: MapOptions) {
     this._MapClass = MapClass;
     this.options = {...options};
@@ -79,7 +82,8 @@ export default class MeScene {
         mapInstance : map
       })
     });
-    this.draw = new Draw(map);
+    this.draw = new Draw(map , this.scene);
+    this.l7Draw = new L7Draw(this.scene);
     MeScene._currentScene = this;
     this.map = map;
     // 绑定事件
@@ -203,12 +207,12 @@ export default class MeScene {
     }
   }
   getMap () {
-    return this.map;
+    return this.map as Map;
   }
   getScene () {
     return this.scene as Scene;
   }
   getDraw () {
-    return this.draw;
+    return this.l7Draw as L7Draw;
   }
 }

@@ -60,13 +60,13 @@ onBeforeUnmount(() => {
 });
 defineExpose({
   getScene () {
-    return mapScene.value?.getScene();
+    return mapScene.value!.getScene();
   },
   getMap () {
-    return mapScene.value?.getMap();
+    return mapScene.value!.getMap();
   },
   getDraw () {
-    return mapScene.value?.getDraw();
+    return mapScene.value!.getDraw();
   }
 });
 </script>

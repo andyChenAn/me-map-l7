@@ -5,6 +5,7 @@ export type DrawOptions = {
   delete?: (evt: any) => void;
   selectionchange?: (evt: any) => void;
   style?: DrawStyle;
+  ranging?: boolean;
 }
 // 标绘样式
 export type DrawStyle = {
@@ -31,3 +32,5 @@ export type DrawStyle = {
   // 圆圈(点)的透明度
   circleOpacity?: number;
 }
+// 鼠标指针类型
+export type MouseCursor = 'crosshair' | 'move' | 'default' | 'grab' | 'pointer';

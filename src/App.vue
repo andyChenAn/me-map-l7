@@ -12,7 +12,8 @@
     <button @click="drawPoint">画点</button>
     <button @click="onChange">修改</button>
     <button @click="onDelete">删除</button>
-    <me-scene ref="sceneRef" v-bind="mapConfig" :on-click="onClick">
+    <button @click="onDeleteDrawer">删除标绘</button>
+    <me-scene ref="sceneRef" v-bind="mapConfig">
       <me-source v-for="item in sourceList" :key="item.id" v-bind="item.source">
         <me-layer v-bind="item.layer" />
       </me-source>
@@ -35,6 +36,8 @@
 import { ref } from 'vue';
 import { ClusterLayerProps } from './me-map-l7/components/cluster-layer/src/cluster-layer.vue';
 import { MarkerOptions, PopupOptions } from './me-map-l7';
+import Draw from './me-map-l7/draw';
+import L7Draw from './me-map-l7/L7Draw';
 const mapConfig = ref({
   center: [121.168, 30.2828],
   zoom: 14.89,
@@ -100,8 +103,27 @@ const sceneRef = ref();
 const showPopup = ref(false);
 const showMarker = ref(false);
 const sourceList = ref<any[]>([])
+const onDeleteDrawer = () => {
+  const draw = sceneRef.value.getDraw() as L7Draw;
+  draw.deleteAllDrawer();
+}
 const drawPoint = () => {
-  const draw = sceneRef.value.getDraw();
+  const draw = sceneRef.value.getDraw() as L7Draw;
+  draw.drawPoint({
+    name : Math.random().toString(16),
+    multiple : false,
+    events : {
+      enable (drawer) {
+        console.log(drawer)
+      },
+      add (newFeature) {
+        console.log(newFeature)
+      },
+      destroy () {
+        console.log('destroy')
+      }
+    }
+  });
 }
 const onDelete = () => {
   sourceList.value = [];
